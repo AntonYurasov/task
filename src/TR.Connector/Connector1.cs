@@ -1,7 +1,15 @@
-﻿namespace TR.Connector
+﻿using TR.Connectors.Api.Entities;
+
+namespace TR.Connector
 {
     public partial class Connector
     {
+        class BaseResponse
+        {
+            public bool success { get; set; }
+            public string errorText { get; set; }
+        }
+        
         //-------TokenResponse------------//
         class TokenResponseData
         {
@@ -24,6 +32,33 @@
             public int id { get; set; }
             public string name { get; set; }
             public string corporatePhoneNumber { get; set; }
+
+            public string FormStringPermission(ERoleType role)
+            {
+                switch (role)
+                {
+                    case ERoleType.ItRole:
+                        return $"ItRole,{id}";
+                    case ERoleType.RequestRight:
+                        return $"RequestRight,{id}";
+                    default:
+                        return null;
+                }
+            }
+            
+            
+            public Permission FormPermission(ERoleType role)
+            {
+                switch (role)
+                {
+                    case ERoleType.ItRole:
+                        return new Permission($"ItRole,{id}", name, corporatePhoneNumber);
+                    case ERoleType.RequestRight:
+                        return new Permission($"RequestRight,{id}", name, corporatePhoneNumber);
+                    default:
+                        return null;
+                }   
+            } 
         }
 
         class RoleResponse
@@ -100,6 +135,39 @@
             public bool isLead { get; set; }
             public string login { get; set; }
             public string status { get; set; }
+            
+            public IEnumerable<Property> FormProperties()
+            {
+                yield return new Property(nameof(lastName), nameof(lastName));
+                yield return new Property(nameof(firstName), nameof(firstName));
+                yield return new Property(nameof(middleName), nameof(middleName));
+                yield return new Property(nameof(telephoneNumber), nameof(telephoneNumber));
+                yield return new Property(nameof(isLead), nameof(isLead));
+                yield return new Property(nameof(status), nameof(status));
+            }
+            
+            public IEnumerable<UserProperty> FormUserProperties()
+            {
+                yield return new UserProperty(nameof(lastName), lastName.ToString());
+                yield return new UserProperty(nameof(firstName), firstName.ToString());
+                yield return new UserProperty(nameof(middleName), middleName.ToString());
+                yield return new UserProperty(nameof(telephoneNumber), telephoneNumber.ToString());
+                yield return new UserProperty(nameof(isLead), isLead.ToString());
+                yield return new UserProperty(nameof(status), status.ToString());
+            }
+            
+            public void ChangeProperty(UserProperty property)
+            {
+                switch (property.Name)
+                {
+                    case nameof(lastName): lastName = property.Value; break; //lastName.
+                    case nameof(firstName): firstName = property.Value; break; //firstName.
+                    case nameof(middleName): middleName = property.Value; break; //middleName.
+                    case nameof(telephoneNumber): telephoneNumber = property.Value; break; //telephoneNumber.
+                    case nameof(isLead): isLead = Convert.ToBoolean(property.Value); break; //isLead.
+                    case nameof(status): status = property.Value; break; //status.
+                }
+            }
         }
 
         class UserPropertyResponse

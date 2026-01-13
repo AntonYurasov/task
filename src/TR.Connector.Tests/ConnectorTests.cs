@@ -19,7 +19,7 @@ namespace TR.Connector.Tests
         [Fact]
         public void GetAllPermissions_Ok()
         {
-            var permissions = _connector.GetAllPermissions();
+            var permissions = _connector.GetAllPermissions().ToBlockingEnumerable();
             Assert.NotNull(permissions);
 
             var ItRole9 = permissions.FirstOrDefault(_ => _.Name == "ITRole9");
@@ -33,7 +33,7 @@ namespace TR.Connector.Tests
         public void GetUserPermissions_Ok()
         {
             var login = "Login3";
-            var permissions = _connector.GetUserPermissions(login).ToList();
+            var permissions = _connector.GetUserPermissions(login).ToBlockingEnumerable().ToList();
 
             Assert.NotNull(permissions);
             Assert.NotNull(permissions.FirstOrDefault(_ => _.Contains("ItRole")));
