@@ -17,11 +17,11 @@ namespace TR.Connector
             public int expires_in { get; set; }
         }
 
-        class TokenResponse
+        class TokenResponse: BaseResponse
         {
             public TokenResponseData data { get; set; }
-            public bool success { get; set; }
-            public object errorText { get; set; }
+            // public bool success { get; set; }
+            // public object errorText { get; set; }
             public object count { get; set; }
         }
         //-------TokenResponse------------//
@@ -61,11 +61,9 @@ namespace TR.Connector
             } 
         }
 
-        class RoleResponse
+        class RoleResponse: BaseResponse
         {
             public List<RoleResponseData> data { get; set; }
-            public bool success { get; set; }
-            public object errorText { get; set; }
             public int count { get; set; }
         }
         //-------RoleResponse------------//
@@ -78,32 +76,26 @@ namespace TR.Connector
             public object users { get; set; }
         }
 
-        class RightResponse
+        class RightResponse: BaseResponse
         {
             public List<RightResponseData> data { get; set; }
-            public bool success { get; set; }
-            public object errorText { get; set; }
             public int count { get; set; }
         }
         //-------RightResponse------------//
 
 
         //-------UserRoleResponse------------//
-        class UserRoleResponse
+        class UserRoleResponse: BaseResponse
         {
             public List<RoleResponseData> data { get; set; }
-            public bool success { get; set; }
-            public object errorText { get; set; }
             public int count { get; set; }
         }
         //-------UserRoleResponse------------//
 
         //-------UserRoleResponse------------//
-        class UserrightResponse
+        class UserrightResponse: BaseResponse
         {
             public List<RightResponseData> data { get; set; }
-            public bool success { get; set; }
-            public object errorText { get; set; }
             public int count { get; set; }
         }
         //-------UserRoleResponse------------//
@@ -116,11 +108,9 @@ namespace TR.Connector
             public string status { get; set; }
         }
 
-        class UserResponse
+        class UserResponse: BaseResponse
         {
             public List<UserResponseData> data { get; set; }
-            public bool success { get; set; }
-            public object errorText { get; set; }
             public int count { get; set; }
         }
         //-------UserResponse------------//
@@ -170,17 +160,25 @@ namespace TR.Connector
             }
         }
 
-        class UserPropertyResponse
+        class UserPropertyResponse: BaseResponse
         {
             public UserPropertyData data { get; set; }
-            public bool success { get; set; }
-            public object errorText { get; set; }
             public int count { get; set; }
         }
 
         class CreateUSerDTO : UserPropertyData
         {
             public string password { get; set; }
+        }
+        
+        class TryLoginDTO
+        {
+            public string login { get; set; }
+            public string password { get; set; }
+        }
+        
+        class AvoidPermissionsDTO
+        {
         }
         //-------UserPropertyResponse------------//
     }

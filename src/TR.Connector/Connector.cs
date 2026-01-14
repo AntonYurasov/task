@@ -57,12 +57,10 @@ namespace TR.Connector
         {
             try
             {
-                var body = new { login, password };
+                TryLoginDTO body = new TryLoginDTO { login = login, password = password };
                 var content = new StringContent(JsonSerializer.Serialize(body), UnicodeEncoding.UTF8,
                     "application/json");
-                var response = await _httpClient.PostAsync("api/v1/login", content);
-                var tokenResponse =
-                    await JsonSerializer.DeserializeAsync<TokenResponse>(await response.Content.ReadAsStreamAsync());
+                var tokenResponse = await PostAsync<TokenResponse, TryLoginDTO>("api/v1/login", body);
                 _token = tokenResponse.data.access_token;
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _token);
             }
@@ -213,10 +211,10 @@ namespace TR.Connector
                         switch (rightStr[0])
                         {
                             case "ItRole":
-                                await PutAsync<BaseResponse>($"api/v1/users/{userLogin}/add/role/{rightStr[1]}", null);
+                                await PutAsync<BaseResponse, AvoidPermissionsDTO>($"api/v1/users/{userLogin}/add/role/{rightStr[1]}", null);
                                 break;
                             case "RequestRight":
-                                await PutAsync<BaseResponse>($"api/v1/users/{userLogin}/add/right/{rightStr[1]}", null);
+                                await PutAsync<BaseResponse, AvoidPermissionsDTO>($"api/v1/users/{userLogin}/add/right/{rightStr[1]}", null);
                                 break;
                             default:
                                 throw new Exception($"Тип доступа {rightStr[0]} не определен");
@@ -316,9 +314,8 @@ namespace TR.Connector
                 {
                     user.ChangeProperty(property);
                 }
-
-                var content = new StringContent(JsonSerializer.Serialize(user), UnicodeEncoding.UTF8, "application/json");
-                await PutAsync<BaseResponse>("api/v1/users/edit", content);
+                
+                await PutAsync<BaseResponse, UserPropertyData>("api/v1/users/edit", user);
             }
             catch (Exception e)
             {
@@ -327,60 +324,62 @@ namespace TR.Connector
             }
         }
 
-        public bool IsUserExists(string userLogin)
+        public async Task<bool> IsUserExists(string userLogin)
         {
-            var httpClient = new HttpClient();
-            httpClient.BaseAddress = new Uri(url);
-            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _token);
+            try
+            {
+                var userResponse = await GetAsync<UserResponse>($"api/v1/users/all");
+                var user = userResponse.data.FirstOrDefault(x => x.login == userLogin);
+                
+                return user != null;
 
-            var response = httpClient.GetAsync($"api/v1/users/all").Result;
-            var userResponse = JsonSerializer.Deserialize<UserResponse>(response.Content.ReadAsStringAsync().Result);
-            var user = userResponse.data.FirstOrDefault(_ => _.login == userLogin);
-
-            if (user != null) return true;
-
-            return false;
+            }
+            catch (Exception e)
+            {
+                Logger.Error($"Connector::IsUserExists: {e.Message}\n{e.StackTrace}");
+                throw;
+            }
         }
 
-        public void CreateUser(UserToCreate user)
+        public async Task CreateUser(UserToCreate user)
         {
-            var httpClient = new HttpClient();
-            httpClient.BaseAddress = new Uri(url);
-            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _token);
-
-            var newUser = new CreateUSerDTO()
+            try
             {
-                login = user.Login,
-                password = user.HashPassword,
+                var newUser = new CreateUSerDTO()
+                {
+                    login = user.Login,
+                    password = user.HashPassword,
 
-                lastName = user.Properties
-                               .FirstOrDefault(p => p.Name.Equals("lastName", StringComparison.OrdinalIgnoreCase))
-                               ?.Value ??
-                           string.Empty,
-                firstName = user.Properties
-                                .FirstOrDefault(p => p.Name.Equals("firstName", StringComparison.OrdinalIgnoreCase))
-                                ?.Value ??
-                            string.Empty,
-                middleName =
-                    user.Properties.FirstOrDefault(p => p.Name.Equals("middleName", StringComparison.OrdinalIgnoreCase))
-                        ?.Value ?? string.Empty,
+                    lastName = user.Properties
+                                   .FirstOrDefault(p => p.Name.Equals("lastName", StringComparison.OrdinalIgnoreCase))
+                                   ?.Value ??
+                               string.Empty,
+                    firstName = user.Properties
+                                    .FirstOrDefault(p => p.Name.Equals("firstName", StringComparison.OrdinalIgnoreCase))
+                                    ?.Value ??
+                                string.Empty,
+                    middleName =
+                        user.Properties.FirstOrDefault(p => p.Name.Equals("middleName", StringComparison.OrdinalIgnoreCase))
+                            ?.Value ?? string.Empty,
 
-                telephoneNumber =
-                    user.Properties
-                        .FirstOrDefault(p => p.Name.Equals("telephoneNumber", StringComparison.OrdinalIgnoreCase))
-                        ?.Value ?? string.Empty,
-                isLead = bool.TryParse(
-                    user.Properties.FirstOrDefault(p => p.Name.Equals("isLead", StringComparison.OrdinalIgnoreCase))
-                        ?.Value ?? string.Empty, out bool isLeadValue)
-                    ? isLeadValue
-                    : false,
+                    telephoneNumber =
+                        user.Properties
+                            .FirstOrDefault(p => p.Name.Equals("telephoneNumber", StringComparison.OrdinalIgnoreCase))
+                            ?.Value ?? string.Empty,
+                    isLead = bool.TryParse(
+                        user.Properties.FirstOrDefault(p => p.Name.Equals("isLead", StringComparison.OrdinalIgnoreCase))
+                            ?.Value ?? string.Empty, out bool isLeadValue) && isLeadValue,
 
-                status = string.Empty
-            };
+                    status = string.Empty
+                };
 
-            var content = new StringContent(JsonSerializer.Serialize(newUser), UnicodeEncoding.UTF8,
-                "application/json");
-            httpClient.PostAsync("api/v1/users/create", content).Wait();
+                await PostAsync<BaseResponse, CreateUSerDTO>("api/v1/users/create", newUser);
+            }
+            catch (Exception e)
+            {
+                Logger.Error($"Connector::CreateUser: {e.Message}\n{e.StackTrace}");
+                throw;
+            }
         }
 
         private async Task<T?> GetAsync<T>(string path)
@@ -415,7 +414,7 @@ namespace TR.Connector
             }
         }
         
-        private async Task<T?> PutAsync<T, K>(string path, K data)
+        private async Task<T?> PutAsync<T, K>(string path, K? data)
         {
             try
             {
