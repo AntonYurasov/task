@@ -60,13 +60,13 @@ namespace TR.Connector.Tests
             var userRight = "RequestRight,5";
             _connector.AddUserPermissions(login, new List<string>(){userRole, userRight});
 
-            var userPermissions = _connector.GetUserPermissions(login).ToList();
+            var userPermissions = _connector.GetUserPermissions(login).ToBlockingEnumerable().ToList();
             Assert.NotNull(userPermissions.FirstOrDefault(_ => _.Contains(userRole)));
             Assert.NotNull(userPermissions.FirstOrDefault(_ => _.Contains(userRight)));
 
             _connector.RemoveUserPermissions(login, new List<string>(){userRole, userRight});
 
-            userPermissions = _connector.GetUserPermissions(login).ToList();
+            userPermissions = _connector.GetUserPermissions(login).ToBlockingEnumerable().ToList();
             Assert.Null(userPermissions.FirstOrDefault(_ => _.Contains(userRole)));
             Assert.Null(userPermissions.FirstOrDefault(_ => _.Contains(userRight)));
         }
@@ -84,7 +84,7 @@ namespace TR.Connector.Tests
         public void Get_UpdateUserProperties_Ok()
         {
             var login = "Login3";
-            var userProperties = _connector.GetUserProperties(login);
+            var userProperties = _connector.GetUserProperties(login).ToBlockingEnumerable();
             Assert.NotNull(userProperties);
 
             Assert.Equal("FirstName3", userProperties.FirstOrDefault(_ => _.Name == "firstName").Value);
@@ -98,7 +98,7 @@ namespace TR.Connector.Tests
             _connector.UpdateUserProperties(userProps, login);
 
 
-            userProperties = _connector.GetUserProperties(login);
+            userProperties = _connector.GetUserProperties(login).ToBlockingEnumerable();
             Assert.NotNull(userProperties);
 
             Assert.Equal("FirstName13", userProperties.FirstOrDefault(_ => _.Name == "firstName").Value);
@@ -110,7 +110,7 @@ namespace TR.Connector.Tests
         {
             var login = "Login100";
 
-            var isUser = _connector.IsUserExists(login);
+            var isUser = _connector.IsUserExists(login).Result;
             Assert.False(isUser);
 
             var user = new UserToCreate(login, "Password100")
@@ -127,7 +127,7 @@ namespace TR.Connector.Tests
 
             _connector.CreateUser(user);
 
-            isUser = _connector.IsUserExists(login);
+            isUser = _connector.IsUserExists(login).Result;
             Assert.True(isUser);
         }
     }
